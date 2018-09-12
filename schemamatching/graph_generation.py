@@ -27,4 +27,27 @@ def generate_pairwise_graph(G1, G2):
             type2 = G2[p][q]['type']
             if type1 == type2:
                 G.add_edge((a, p), (b, q))
+                G.add_edge((b, q), (a, p))
+    G = add_weights_to_pairwise(G)
     return G
+
+def add_weights_to_pairwise(G):
+    for node in G.nodes():
+        G.nodes[node]['score'] = 1
+        degree = len(G[node])
+        edges = [(node, adjacent) for adjacent in G[node]]
+        for adjacent in G[node]:
+            G[node][adjacent]['weight'] = 1.0 / degree
+    return G
+
+def do_one_interation_of_flooding(G):
+    G2 = G.copy()
+    for (u, v, d) in G.edges(data=True):
+        G2.nodes[v]['score'] += G.nodes[u]['score'] * d['weight']
+    all_scores = nx.get_node_attributes(G2, name='score')
+    max_score = max(all_scores.values())
+    
+    for node, data in G2.nodes(data=True):
+        G2.nodes[node]['score'] = data['score'] / max_score
+    nx.nodes
+    return G2
