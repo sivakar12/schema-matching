@@ -5,9 +5,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
-def create_pipeline(model):            
+def create_pipeline(classifier):            
     vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 2), lowercase=False)
-    classifier = model if model != None else DecisionTreeClassifier(random_state=42)
     pipeline = make_pipeline(vectorizer, classifier)
     return pipeline
 
@@ -42,10 +41,12 @@ def get_features(xml):
             records.append((instance, tag))
     return pd.DataFrame.from_records(records, columns=['item', 'tag'])
 
-def compare_xmls(xml1, xml2, model):
+def compare_xmls(xml1, xml2, model=None):
     xml1_data = collect_instance_data(xml1)
     xml1_features = get_features(xml1)
     xml2_data = collect_instance_data(xml2)
+
+    if model == None: model = DecisionTreeClassifier(random_state=42)
     pipeline = create_pipeline(model)
     pipeline.fit(xml1_features['item'], xml1_features['tag'])
 
