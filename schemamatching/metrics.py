@@ -13,6 +13,8 @@ def generate_actual_pairs_dataframe(pairs_file_text):
         df.fillna(0.0, inplace=True)
     return df
 
+def get_subset(true_mappings, pred_mappings):
+    return pred_mappings.loc[true_mappings.index, true_mappings.columns]
 
 def mean_difference(results, actual_results):
     columns = actual_results.columns
@@ -27,12 +29,12 @@ def average_log_loss(true_mappings, pred_mappings):
 
 def accuracy(true_mappings, pred_mappings):
     pred_subset = get_subset(true_mappings, pred_mappings)
-    return accuracy_score(true_mappings.apply(np.argmax), pred_mappings.apply(np.argmax))
+    return accuracy_score(true_mappings.idxmax(), pred_subset.idxmax())
 
 def precision(true_mappings, pred_mappings):
     pred_subset = get_subset(true_mappings, pred_mappings)
-    return precision_score(true_mappings.apply(np.argmax), pred_mappings.apply(np.argmax))
+    return precision_score(true_mappings.idxmax(), pred_subset.idxmax(), average='weighted')
 
 def recall(true_mappings, pred_mappings):
     pred_subset = get_subset(true_mappings, pred_mappings)
-    return recall_score(true_mappings.apply(np.argmax), pred_mappings.apply(np.argmax))
+    return recall_score(true_mappings.idxmax(), pred_subset.idxmax(), average='weighted')
