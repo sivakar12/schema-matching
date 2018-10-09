@@ -43,19 +43,19 @@ def get_features(xml):
 
 def compare_xmls(xml1, xml2, model=None):
     xml1_data = collect_instance_data(xml1)
-    xml1_features = get_features(xml1)
     xml2_data = collect_instance_data(xml2)
+    xml2_features = get_features(xml2)
 
     if model == None: model = DecisionTreeClassifier(random_state=42)
     pipeline = create_pipeline(model)
-    pipeline.fit(xml1_features['item'], xml1_features['tag'])
+    pipeline.fit(xml2_features['item'], xml2_features['tag'])
 
-    output_shape =len(xml2_data.keys()), len(xml1_data.keys())
+    output_shape =len(xml1_data.keys()), len(xml2_data.keys())
     outputs = pd.DataFrame(np.zeros(output_shape),
-        index=xml2_data.keys(), columns=xml1_data.keys())
+        index=xml1_data.keys(), columns=xml2_data.keys())
     
-    for tag in xml2_data:
-        predictions = pipeline.predict(xml2_data[tag])
+    for tag in xml1_data:
+        predictions = pipeline.predict(xml1_data[tag])
         total = len(predictions)
         for p in predictions:
             outputs.loc[tag, p] += 1.0 / total
