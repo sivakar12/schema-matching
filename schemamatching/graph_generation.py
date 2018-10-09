@@ -67,6 +67,7 @@ class SimilarityFlooding:
                 self.pairwise_graph.nodes[(row, column)]['score'] = \
                     score_matrix.loc[row, column]
     
+
     def flood_once(self):
         """
         Returns the average of the change of score in each node
@@ -78,3 +79,12 @@ class SimilarityFlooding:
             dict(self.pairwise_graph.nodes(data=True)).items()}
         return sum(abs(initial_scores[key] - final_scores[key]) \
             for key in initial_scores) / len(initial_scores.values())
+    
+    def flood_until_threshold(self, threshold=1e-4, max_floods=100):
+        count = 0
+        while True:
+            change = self.flood_once()
+            count += 1 
+            if change < threshold or count > max_floods:
+                break
+        return change
