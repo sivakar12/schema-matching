@@ -1,5 +1,7 @@
 import networkx as nx
 import xml.etree.ElementTree as ET
+import numpy as np
+import pandas as pd
 
 def generate_graph(xml_string):
     def _recurse(Graph, node, parent_path='/'):
@@ -88,3 +90,15 @@ class SimilarityFlooding:
             if change < threshold or count > max_floods:
                 break
         return change
+    
+    def get_results(self):
+        rows = set(map(lambda x: x[0], self.pairwise_graph.nodes))
+        columns = set(map(lambda x: x[1], self.pairwise_graph.nodes))
+        np_matrix = np.zeros((len(rows), len(columns)), dtype=float)
+        df = pd.DataFrame(np_matrix, index=rows, columns=columns)
+
+        for row in rows:
+            for column in columns:
+                if (row, column) in self.pairwise_graph.nodes:
+                    df.loc[row, column] = self.pairwise_graph.nodes[(row, column)]['score']
+        return df
