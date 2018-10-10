@@ -1,2 +1,5 @@
 __pycache__
 .ipynb_checkpoints
+data
+simple_xmls
+same_schema_data
