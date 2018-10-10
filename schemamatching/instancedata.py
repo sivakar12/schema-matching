@@ -1,25 +1,43 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from xml.etree import ElementTree as ET
 from sklearn.base import TransformerMixin
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
+from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
+
+def datatype(a):
+    try:
+        float(a)
+        if("." in a):
+            # return "float"
+            return 0
+        else:
+            # return "int"
+            return 1
+    except:
+        # return "string"
+        return 2
 
 class LengthTransformer(TransformerMixin):
     def fit(self, X, y=None):
         return self
     def transform(self, X, y=None):
-        # X_new = pd.DataFrame()
-        # X_new['content'] = X['content'].str.len()
-        return X.str.len()
+        X_new = pd.DataFrame()
+        X_new['content'] = X.str.len()
+        return X_new
+        # return X['content'].str.len()
 
 class DataTypeTransformer(TransformerMixin):
     def fit(self, X, y=None):
         return self
     def transform(self, X):
-        return X.apply(datatype)
+        X_new = pd.DataFrame()
+        X_new['content'] = X.apply(datatype)
+        return X_new
+        # return X['content'].apply(datatype)
 
 def create_pipeline(classifier, feature_selection=False, length=False, datatype=False):            
     pipeline_items = []
@@ -30,7 +48,10 @@ def create_pipeline(classifier, feature_selection=False, length=False, datatype=
     if length:
         feature_extractors.append(('length', LengthTransformer()))
     if datatype:
-        feature_extractors.append(('datatype', DataTypeTransformer()))
+        feature_extractors.append(('datatype', Pipeline([
+            ('apply', DataTypeTransformer()),
+            ('dummify', DummyTransformer())
+        ])))
     features = FeatureUnion(feature_extractors)
 
     pipeline_items.append(('features', features))
@@ -79,7 +100,7 @@ def compare_xmls(xml1, xml2, model=None, \
     xml2_features = get_features(xml2)
 
     if model == None: model = DecisionTreeClassifier(random_state=42)
-    pipeline = create_pipeline(model)
+    pipeline = create_pipeline(model, feature_selection, length, datatype)
     pipeline.fit(xml2_features['content'], xml2_features['tag'])
 
     output_shape =len(xml1_data.keys()), len(xml2_data.keys())
