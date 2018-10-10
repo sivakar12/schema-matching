@@ -37,7 +37,7 @@ def generate_pairwise_graph(G1, G2):
 
 def add_weights_to_pairwise(G):
     for node in G.nodes():
-        G.nodes[node]['score'] = 1
+        G.nodes[node]['score'] = 0
         degree = len(G[node])
         edges = [(node, adjacent) for adjacent in G[node]]
         for adjacent in G[node]:
