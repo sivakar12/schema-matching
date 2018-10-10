@@ -1,13 +1,44 @@
 import pandas as pd
 import numpy as np
 from xml.etree import ElementTree as ET
+from sklearn.base import TransformerMixin
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_selection import SelectFromModel
 
-def create_pipeline(classifier):            
+class LengthTransformer(TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X, y=None):
+        # X_new = pd.DataFrame()
+        # X_new['content'] = X['content'].str.len()
+        return X.str.len()
+
+class DataTypeTransformer(TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X):
+        return X.apply(datatype)
+
+def create_pipeline(classifier, feature_selection=False, length=False, datatype=False):            
+    pipeline_items = []
+    feature_extractors = []
+
     vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 2), lowercase=False)
-    pipeline = make_pipeline(vectorizer, classifier)
+    feature_extractors.append(('vectorizer', vectorizer))
+    if length:
+        feature_extractors.append(('length', LengthTransformer()))
+    if datatype:
+        feature_extractors.append(('datatype', DataTypeTransformer()))
+    features = FeatureUnion(feature_extractors)
+
+    pipeline_items.append(('features', features))
+    if feature_selection:
+        pipeline_items.append(('feature_selection', SelectFromModel(classifier)))
+    pipeline_items.append(('classifier', classifier))
+    
+    pipeline = Pipeline(pipeline_items)
     return pipeline
 
 def collect_instance_data(xml_string):
@@ -39,23 +70,25 @@ def get_features(xml):
     for tag in instance_data_dict:
         for instance in instance_data_dict[tag]:
             records.append((instance, tag))
-    return pd.DataFrame.from_records(records, columns=['item', 'tag'])
+    return pd.DataFrame.from_records(records, columns=['content', 'tag'])
 
-def compare_xmls(xml1, xml2, model=None):
+def compare_xmls(xml1, xml2, model=None, \
+        feature_selection=False, length=False, datatype=False):
     xml1_data = collect_instance_data(xml1)
     xml2_data = collect_instance_data(xml2)
     xml2_features = get_features(xml2)
 
     if model == None: model = DecisionTreeClassifier(random_state=42)
     pipeline = create_pipeline(model)
-    pipeline.fit(xml2_features['item'], xml2_features['tag'])
+    pipeline.fit(xml2_features['content'], xml2_features['tag'])
 
     output_shape =len(xml1_data.keys()), len(xml2_data.keys())
     outputs = pd.DataFrame(np.zeros(output_shape),
         index=xml1_data.keys(), columns=xml2_data.keys())
     
     for tag in xml1_data:
-        predictions = pipeline.predict(xml1_data[tag])
+        X_new = pd.DataFrame({ 'content': xml1_data[tag] })
+        predictions = pipeline.predict(X_new['content'])
         total = len(predictions)
         for p in predictions:
             outputs.loc[tag, p] += 1.0 / total
