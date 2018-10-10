@@ -101,4 +101,6 @@ class SimilarityFlooding:
             for column in columns:
                 if (row, column) in self.pairwise_graph.nodes:
                     df.loc[row, column] = self.pairwise_graph.nodes[(row, column)]['score']
+                    
+        df = df.div(df.sum(axis=1), axis=0)
         return df

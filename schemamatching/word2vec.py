@@ -41,4 +41,6 @@ def compare_tag_names(xml1, xml2):
                 df.loc[t1, t2] = token1.similarity(token2)
             except:
                 print('Error: ', token1, token2)
+    
+    df = df.div(df.sum(axis=1), axis=0)
     return df

@@ -22,4 +22,6 @@ def compare_xmls_using_document_similarity(xml1, xml2):
         for tag2 in dict2.keys():
             text2 = nlp(dict2[tag2])
             df.loc[tag1, tag2] = text1.similarity(text2)
+
+    df = df.div(df.sum(axis=1), axis=0)
     return df
