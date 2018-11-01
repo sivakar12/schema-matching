@@ -1,20 +1,25 @@
+from xml.etree import ElementTree as ET
+
 import numpy as np
 import pandas as pd
-from xml.etree import ElementTree as ET
+
 from sklearn.base import TransformerMixin
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
-from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
 
+from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
+from .metrics import *
 
 class SchemaMatcher:
-    def __init__(self, xml1, xml2, classifier=LogisticRegression(), \
+    def __init__(self, xml1, xml2, true_pairs, classifier=LogisticRegression(), \
             feature_selector=None, length=False, datatype=False):
         self.xml1 = xml1
         self.xml2 = xml2
+        self.true_pairs_dict = make_true_pairs_dict(true_pairs)
+        self.true_pairs_matrix = make_true_pairs_dataframe(true_pairs)
         self.pipeline = create_pipeline(classifier, feature_selector, length, datatype)
         self.results = None
 
@@ -36,6 +41,15 @@ class SchemaMatcher:
                 self.results.loc[tag, p] += 1.0 / total
         
         return self.results
+    
+    def get_all_scores(self):
+        functions = [accuracy, precision, recall, \
+            mean_difference, average_log_loss]
+        return { f.__name__: f(self.true_pairs_matrix, self.results)
+            for f in functions }
+    
+    def get_score(self, scoring_function):
+        return scoring_function(self.true_pairs_matrix, self.results)
     
 
 def collect_instance_data(xml_string):
@@ -97,7 +111,7 @@ class DataTypeTransformer(TransformerMixin):
         return X_new
         # return X['content'].apply(datatype)
 
-def create_pipeline(classifier, feature_selector, length, datatype):            
+def create_pipeline(classifier, feature_selector, length, datatype):
     pipeline_items = []
     feature_extractors = []
 

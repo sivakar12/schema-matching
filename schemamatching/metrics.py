@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import log_loss, accuracy_score, f1_score, precision_score, recall_score
 
-def generate_actual_pairs_dataframe(pairs_file_text):
+def generate_true_mappings_dataframe(pairs_file_text):
     pairs = [line.strip().split(':') for line in pairs_file_text.split('\n')]
     rows = [r[0] for r in pairs]
     columns = [r[1] for r in pairs]
@@ -12,6 +12,10 @@ def generate_actual_pairs_dataframe(pairs_file_text):
         df.loc[pair[0], pair[1]] = 1.0
         df.fillna(0.0, inplace=True)
     return df
+
+def make_true_pairs_dict(pairs_file_text):
+    pairs = [line.strip().split(':') for line in pairs_file_text.split('\n')]
+    return { pair[0]: pair[1] for pair in pairs }
 
 def get_subset(true_mappings, pred_mappings):
     return pred_mappings.loc[true_mappings.index, true_mappings.columns]
