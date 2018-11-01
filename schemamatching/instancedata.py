@@ -3,10 +3,40 @@ import pandas as pd
 from xml.etree import ElementTree as ET
 from sklearn.base import TransformerMixin
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
+
+
+class SchemaMatcher:
+    def __init__(self, xml1, xml2, classifier=LogisticRegression(), \
+            feature_selector=None, length=False, datatype=False):
+        self.xml1 = xml1
+        self.xml2 = xml2
+        self.pipeline = create_pipeline(classifier, feature_selector, length, datatype)
+        self.results = None
+
+    def generate_mappings(self):
+        xml1_data = collect_instance_data(self.xml1)
+        xml2_data = collect_instance_data(self.xml2)
+        xml2_features = get_features(self.xml2)
+
+        self.pipeline.fit(xml2_features['content'], xml2_features['tag'])
+        results_shape = len(xml1_data.keys()), len(xml2_data.keys())
+        self.results = pd.DataFrame(np.zeros(results_shape),
+            index=xml1_data.keys(), columns=xml2_data.keys())
+        
+        for tag in xml1_data:
+            X_new = pd.DataFrame({ 'content': xml1_data[tag] })
+            predictions = self.pipeline.predict(X_new['content'])
+            total = len(predictions)
+            for p in predictions:
+                self.results.loc[tag, p] += 1.0 / total
+        
+        return self.results
+    
 
 def collect_instance_data(xml_string):
     def _recurse(data, current_path, xml_element):
@@ -67,7 +97,7 @@ class DataTypeTransformer(TransformerMixin):
         return X_new
         # return X['content'].apply(datatype)
 
-def create_pipeline(classifier, feature_selector=None, length=False, datatype=False):            
+def create_pipeline(classifier, feature_selector, length, datatype):            
     pipeline_items = []
     feature_extractors = []
 
