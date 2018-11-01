@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
 from .metrics import *
@@ -18,8 +19,8 @@ class SchemaMatcher:
             feature_selector=None, length=False, datatype=False):
         self.xml1 = xml1
         self.xml2 = xml2
-        self.true_pairs_dict = make_true_pairs_dict(true_pairs)
-        self.true_pairs_matrix = make_true_pairs_dataframe(true_pairs)
+        self.true_mappings_dict = make_true_mappings_dict(true_pairs)
+        self.true_mappings_matrix = make_true_mappings_dataframe(true_pairs)
         self.pipeline = create_pipeline(classifier, feature_selector, length, datatype)
         self.results = None
 
@@ -45,12 +46,27 @@ class SchemaMatcher:
     def get_all_scores(self):
         functions = [accuracy, precision, recall, \
             mean_difference, average_log_loss]
-        return { f.__name__: f(self.true_pairs_matrix, self.results)
+        return { f.__name__: f(self.true_mappings_matrix, self.results)
             for f in functions }
     
     def get_score(self, scoring_function):
-        return scoring_function(self.true_pairs_matrix, self.results)
+        return scoring_function(self.true_mappings_matrix, self.results)
     
+    def do_internal_comparison(self):
+        xml1_feature_matrix = get_features_for_specific_tags(self.xml1, self.true_mappings_dict.keys())
+        predictions = self.pipeline.predict(xml1_feature_matrix['content'])
+        true = list(map(lambda x: self.true_mappings_dict[x], 
+            xml1_feature_matrix['tag'].values))
+        return true, predictions
+    
+    def score_internally(self):
+        true, predictions = self.do_internal_comparison()
+        return {
+            'accuracy': accuracy_score(true, predictions),
+            'precision': precision_score(true, predictions, average='weighted'),
+            'recall': recall_score(true, predictions, average='weighted')
+        }
+
 
 def collect_instance_data(xml_string):
     def _recurse(data, current_path, xml_element):
@@ -79,6 +95,16 @@ def get_features(xml):
     records = []
     instance_data_dict = collect_instance_data(xml)
     for tag in instance_data_dict:
+        for instance in instance_data_dict[tag]:
+            records.append((instance, tag))
+    return pd.DataFrame.from_records(records, columns=['content', 'tag'])
+
+def get_features_for_specific_tags(xml, tags):
+    records = []
+    instance_data_dict = collect_instance_data(xml)
+    for tag in instance_data_dict:
+        if tag not in tags:
+            continue
         for instance in instance_data_dict[tag]:
             records.append((instance, tag))
     return pd.DataFrame.from_records(records, columns=['content', 'tag'])
