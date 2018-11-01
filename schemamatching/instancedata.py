@@ -141,7 +141,7 @@ def create_pipeline(classifier, feature_selector, length, datatype):
     pipeline_items = []
     feature_extractors = []
 
-    vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 2), lowercase=False)
+    vectorizer = TfidfVectorizer(analyzer='char', ngram_range=(1, 3), lowercase=False)
     feature_extractors.append(('vectorizer', vectorizer))
     if length:
         feature_extractors.append(('length', LengthTransformer()))

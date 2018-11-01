@@ -14,32 +14,35 @@ def make_true_mappings_dataframe(pairs_file_text):
     return df
 
 def make_true_mappings_dict(pairs_file_text):
-    pairs = [line.strip().split(':') for line in pairs_file_text.split('\n')]
+    pairs = [line.strip().split(':') for line in pairs_file_text.split('\n') if line != '']
     return { pair[0]: pair[1] for pair in pairs }
 
 def get_subset(true_mappings, pred_mappings):
-    return pred_mappings.loc[true_mappings.index, true_mappings.columns]
+    rows = set(true_mappings.index).intersection(set(pred_mappings.index))
+    columns = set(true_mappings.columns).intersection(set(pred_mappings.columns))
+    return true_mappings.loc[rows, columns], pred_mappings.loc[rows, columns]
 
 def mean_difference(true_mappings, pred_mappings):
-    diff = get_subset(true_mappings, pred_mappings).values - true_mappings.values
+    true, pred = get_subset(true_mappings, pred_mappings)
+    diff = true.values - pred.values
     return -np.sum(np.abs(diff)) /( diff.shape[0] * diff.shape[1])
 
 def average_log_loss(true_mappings, pred_mappings):
-    pred_subset = get_subset(true_mappings, pred_mappings)
-    losses = [log_loss(true_mappings.iloc[i], pred_subset.iloc[i]) for i in range(pred_subset.shape[0])]
+    true_subset, pred_subset = get_subset(true_mappings, pred_mappings)
+    losses = [log_loss(true_subset.iloc[i], pred_subset.iloc[i]) for i in range(pred_subset.shape[0])]
     return -1 * sum(losses) / len(losses)
 
 def accuracy(true_mappings, pred_mappings):
-    pred_subset = get_subset(true_mappings, pred_mappings)
-    return accuracy_score(true_mappings.idxmax(), pred_subset.idxmax())
+    true_subset, pred_subset = get_subset(true_mappings, pred_mappings)
+    return accuracy_score(true_subset.idxmax(), pred_subset.idxmax())
 
 def precision(true_mappings, pred_mappings):
-    pred_subset = get_subset(true_mappings, pred_mappings)
-    return precision_score(true_mappings.idxmax(), pred_subset.idxmax(), average='weighted')
+    true_subset, pred_subset = get_subset(true_mappings, pred_mappings)
+    return precision_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
 
 def recall(true_mappings, pred_mappings):
-    pred_subset = get_subset(true_mappings, pred_mappings)
-    return recall_score(true_mappings.idxmax(), pred_subset.idxmax(), average='weighted')
+    true_subset, pred_subset = get_subset(true_mappings, pred_mappings)
+    return recall_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
 
 def print_all_scores(true_mappings, pred_mappings):
     print("Mean difference: ", mean_difference(true_mappings, pred_mappings))
