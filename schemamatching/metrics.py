@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import log_loss, accuracy_score, f1_score, precision_score, recall_score
 
 def generate_true_mappings_dataframe(pairs_file_text):
-    pairs = [line.strip().split(':') for line in pairs_file_text.split('\n')]
+    pairs = [line.strip().split(':') for line in pairs_file_text.split('\n') if line != '']
     rows = [r[0] for r in pairs]
     columns = [r[1] for r in pairs]
     rows, columns
