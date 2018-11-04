@@ -10,6 +10,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.model_selection import cross_val_score
 
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
 from .metrics import *
@@ -137,7 +138,8 @@ class DataTypeTransformer(TransformerMixin):
         return X_new
         # return X['content'].apply(datatype)
 
-def create_pipeline(classifier, feature_selector, length, datatype):
+def create_pipeline(classifier=LogisticRegression(), feature_selector=None,\
+        length=False, datatype=False):
     pipeline_items = []
     feature_extractors = []
 
@@ -159,6 +161,15 @@ def create_pipeline(classifier, feature_selector, length, datatype):
     
     pipeline = Pipeline(pipeline_items)
     return pipeline
+
+def score_pipeline(xml, pipeline, scoring_methods):
+    _average = lambda numbers: sum(numbers) / len(numbers)
+    
+    features = get_features(xml)
+    x = features['content']
+    y = features['tag']
+    results = { scoring_method: _average(cross_val_score(pipeline, x, y, scoring=scoring_method)) for scoring_method in scoring_methods }
+    return results
 
 def compare_xmls(xml1, xml2, model=None, \
         feature_selector=None, length=False, datatype=False):
