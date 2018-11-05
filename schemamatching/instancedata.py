@@ -18,6 +18,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import cross_val_score
 
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
+from .graph import SimilarityFlooding
 from .metrics import *
 
 class SchemaMatcher:
@@ -29,6 +30,7 @@ class SchemaMatcher:
         self.true_mappings_matrix = make_true_mappings_dataframe(true_pairs)
         self.pipeline = create_pipeline(classifier, feature_selector, length, datatype)
         self.results = None
+        self.results_after_similarity_flooding = None
 
     def generate_mappings(self):
         # This is here for backward compatibility after renaming method
@@ -92,6 +94,15 @@ class SchemaMatcher:
             'precision': precision_score(true, predictions, average='weighted'),
             'recall': recall_score(true, predictions, average='weighted')
         }
+    
+    def do_similarity_flooding(self):
+        if self.results == None:
+            self.get_classifier_results()
+        sf = SimilarityFlooding(self.xml1, self.xml2)
+        sf.set_initial_scores(self.results)
+        sf.flood_until_threshold()
+        self.results_after_similarity_flooding = sf.get_results()
+        return self.results_after_similarity_flooding
 
 
 def collect_instance_data(xml_string):
