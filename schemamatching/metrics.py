@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import log_loss, accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import log_loss as sklearn_log_loss, \
+    accuracy_score, f1_score, precision_score, recall_score
 
 def make_true_mappings_dataframe(pairs_file_text):
     pairs = [line.strip().split(':') for line in pairs_file_text.split('\n') if line != '']
@@ -27,10 +28,9 @@ def mean_difference(true_mappings, pred_mappings):
     diff = true.values - pred.values
     return -np.sum(np.abs(diff)) /( diff.shape[0] * diff.shape[1])
 
-def average_log_loss(true_mappings, pred_mappings):
+def log_loss(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
-    losses = [log_loss(true_subset.iloc[i], pred_subset.iloc[i]) for i in range(pred_subset.shape[0])]
-    return -1 * sum(losses) / len(losses)
+    return -sklearn_log_loss(np.argmax(true_subset.values, axis=1), pred_subset.values)
 
 def accuracy(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
@@ -46,7 +46,7 @@ def recall(true_mappings, pred_mappings):
 
 def print_all_scores(true_mappings, pred_mappings):
     print("Mean difference: ", mean_difference(true_mappings, pred_mappings))
-    print("Log loss: ", average_log_loss(true_mappings, pred_mappings))
+    print("Log loss: ", log_loss(true_mappings, pred_mappings))
     print("Accuracy: ", accuracy(true_mappings, pred_mappings))
     print("Precision: ", precision(true_mappings, pred_mappings))
     print("Recall: ", recall(true_mappings, pred_mappings))
