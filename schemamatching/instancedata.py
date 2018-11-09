@@ -30,6 +30,7 @@ class SchemaMatcher:
         self.true_mappings_matrix = make_true_mappings_dataframe(true_pairs)
         self.pipeline = create_pipeline(classifier, feature_selector, length, datatype)
         self.results = None
+        self.word_embedding_results = None
         self.results_after_similarity_flooding = None
 
     def generate_mappings(self):
@@ -96,10 +97,17 @@ class SchemaMatcher:
         }
     
     def do_similarity_flooding(self):
+        if self.word_embedding_results == None:
+            self.word_embedding_results = compare_tag_names(
+                self.xml1, self.xml2, include_parents=True)
+        
         if self.results == None:
             self.get_classifier_results()
+        
         sf = SimilarityFlooding(self.xml1, self.xml2)
+        sf.set_initial_scores(self.word_embedding_results)
         sf.set_initial_scores(self.results)
+        
         sf.flood_until_threshold()
         self.results_after_similarity_flooding = sf.get_results()
         return self.results_after_similarity_flooding

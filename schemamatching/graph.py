@@ -66,8 +66,9 @@ class SimilarityFlooding:
     def set_initial_scores(self, score_matrix):
         for row in score_matrix.index:
             for column in score_matrix.columns:
-                self.pairwise_graph.nodes[(row, column)]['score'] = \
-                    score_matrix.loc[row, column]
+                if (row, column) in self.pairwise_graph.nodes:
+                    self.pairwise_graph.nodes[(row, column)]['score'] = \
+                        score_matrix.loc[row, column]
     
 
     def flood_once(self):
