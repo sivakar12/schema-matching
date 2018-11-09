@@ -229,7 +229,13 @@ def compare_xmls(xml1, xml2, model=None, \
             outputs.loc[tag, p] += 1.0 / total
     return outputs
 
-def compare_tag_names(xml1, xml2):
+def get_parent_tags(tag):
+    if tag.count('/') < 1:
+        return []
+    parent = re.match(r'(.*)/.*', tag)[1]
+    return [tag] + get_parent_tags(parent)
+
+def compare_tag_names(xml1, xml2, include_parents=False):
     def last_item(tag):
         tag = re.sub('{.*}', '', tag)
         tag = re.sub('#', '/', tag)
@@ -251,6 +257,13 @@ def compare_tag_names(xml1, xml2):
     
     tags1 = collect_instance_data(xml1).keys()
     tags2 = collect_instance_data(xml2).keys()
+    
+    if include_parents:
+        tags1 = [parent_tag for tag in tags1 for parent_tag in get_parent_tags(tag)]
+        tags2 = [parent_tag for tag in tags2 for parent_tag in get_parent_tags(tag)]
+        
+        tags1 = list(set(tags1))
+        tags2 = list(set(tags2))
     
     np_matrix = np.zeros((len(tags1), len(tags2)), dtype=float)
     df = pd.DataFrame(np_matrix, index=tags1, columns=tags2)
