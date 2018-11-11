@@ -44,9 +44,14 @@ def recall(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
     return recall_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
 
+def f1(true_mappings, pred_mappings):
+    true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
+    return f1_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
+
 def print_all_scores(true_mappings, pred_mappings):
     print("Mean difference: ", mean_difference(true_mappings, pred_mappings))
     print("Log loss: ", log_loss(true_mappings, pred_mappings))
     print("Accuracy: ", accuracy(true_mappings, pred_mappings))
     print("Precision: ", precision(true_mappings, pred_mappings))
     print("Recall: ", recall(true_mappings, pred_mappings))
+    print("F1: ", f1_score(true_mappings, pred_mappings))

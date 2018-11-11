@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import cross_val_score
 
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
@@ -73,7 +73,7 @@ class SchemaMatcher:
         return results
 
     def get_all_scores(self):
-        functions = [accuracy, precision, recall, \
+        functions = [accuracy, precision, recall, f1, \
             mean_difference, log_loss]
         return { f.__name__: f(self.true_mappings_matrix, self.results)
             for f in functions }
@@ -93,7 +93,8 @@ class SchemaMatcher:
         return {
             'accuracy': accuracy_score(true, predictions),
             'precision': precision_score(true, predictions, average='weighted'),
-            'recall': recall_score(true, predictions, average='weighted')
+            'recall': recall_score(true, predictions, average='weighted'),
+            'f1_score': f1_score(true, predictions, average='weighted')
         }
     
     def do_similarity_flooding(self):
