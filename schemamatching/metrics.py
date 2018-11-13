@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import laccuracy_score, f1_score,\
+from sklearn.metrics import accuracy_score, f1_score,\
     precision_score, recall_score
 from scipy.optimize import linear_sum_assignment
 
@@ -68,4 +68,4 @@ def print_all_scores(true_mappings, pred_mappings):
     print("Accuracy: ", accuracy(true_mappings, pred_mappings))
     print("Precision: ", precision(true_mappings, pred_mappings))
     print("Recall: ", recall(true_mappings, pred_mappings))
-    print("F1: ", f1_score(true_mappings, pred_mappings))
+    print("F1: ", f1(true_mappings, pred_mappings))

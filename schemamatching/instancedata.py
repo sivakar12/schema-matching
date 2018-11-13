@@ -76,6 +76,9 @@ class SchemaMatcher:
         return results
 
     def get_all_scores(self):
+        if self.results == None:
+            self.get_classifier_results()
+
         functions = [accuracy, precision, recall, f1, \
             mean_difference]
         return { f.__name__: f(self.true_mappings_matrix, self.results)
@@ -95,9 +98,9 @@ class SchemaMatcher:
         true, predictions = self.do_internal_comparison()
         return {
             'accuracy': accuracy_score(true, predictions),
-            'precision': precision_score(true, predictions, average='weighted'),
-            'recall': recall_score(true, predictions, average='weighted'),
-            'f1_score': f1_score(true, predictions, average='weighted')
+            'precision': precision_score(true, predictions, average='micro'),
+            'recall': recall_score(true, predictions, average='micro'),
+            'f1_score': f1_score(true, predictions, average='micro')
         }
     
     def get_same_xml_accuracies(self):
@@ -302,8 +305,3 @@ def compare_tag_names(xml1, xml2, include_parents=False):
     
     df = df.div(df.sum(axis=1), axis=0)
     return df
-
-# from scipy.optimize import linear_sum_assignment
-# def hungarian_algorithm(results):
-#     row_index, col_index = linear_sum_assignment(-1 * results)
-#     return [(results.index[row], results.index[col])for row, col in zip(row_index, col_index)]
