@@ -77,7 +77,7 @@ class SchemaMatcher:
 
     def get_all_scores(self):
         functions = [accuracy, precision, recall, f1, \
-            mean_difference, log_loss]
+            mean_difference]
         return { f.__name__: f(self.true_mappings_matrix, self.results)
             for f in functions }
     
