@@ -37,10 +37,13 @@ class SchemaMatcher:
         # This is here for backward compatibility after renaming method
         return self.get_classifier_results()
 
-    def get_classifier_results(self):
-        xml1_data = collect_instance_data(self.xml1)
-        xml2_data = collect_instance_data(self.xml2)
-        xml2_features = get_features(self.xml2)
+    def get_classifier_results(self, xml1=None, xml2=None):
+        if xml1 == None: xml1 = self.xml1
+        if xml2 == None: xml2 = self.xml2
+        
+        xml1_data = collect_instance_data(xml1)
+        xml2_data = collect_instance_data(xml2)
+        xml2_features = get_features(xml2)
 
         self.pipeline.fit(xml2_features['content'], xml2_features['tag'])
         results_shape = len(xml1_data.keys()), len(xml2_data.keys())
@@ -96,6 +99,17 @@ class SchemaMatcher:
             'recall': recall_score(true, predictions, average='weighted'),
             'f1_score': f1_score(true, predictions, average='weighted')
         }
+    
+    def get_same_xml_accuracies(self):
+
+        def _evaluate_results(pred_matrix):
+            true_matrix = np.identity(pred_matrix.shape[0])
+            true_matrix = pd.DataFrame(true_matrix, index=pred_matrix.index, columns=pred_matrix.columns)
+            return accuracy(true_matrix, pred_matrix)
+
+        result_1 = self.get_classifier_results(self.xml1, self.xml1)
+        result_2 = self.get_classifier_results(self.xml2, self.xml2)
+        return list(map(_evaluate_results, [result_1, result_2]))
     
     def do_similarity_flooding(self):
         if self.word_embedding_results == None:
@@ -288,3 +302,8 @@ def compare_tag_names(xml1, xml2, include_parents=False):
     
     df = df.div(df.sum(axis=1), axis=0)
     return df
+
+# from scipy.optimize import linear_sum_assignment
+# def hungarian_algorithm(results):
+#     row_index, col_index = linear_sum_assignment(-1 * results)
+#     return [(results.index[row], results.index[col])for row, col in zip(row_index, col_index)]
