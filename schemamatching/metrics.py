@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import log_loss as sklearn_log_loss, \
     accuracy_score, f1_score, precision_score, recall_score
+from scipy.optimize import linear_sum_assignment
 
 def make_true_mappings_dataframe(pairs_file_text):
     pairs = [line.strip().split(':') for line in pairs_file_text.split('\n') if line != '']
@@ -32,21 +33,25 @@ def log_loss(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
     return -sklearn_log_loss(np.argmax(true_subset.values, axis=1), pred_subset.values)
 
+def get_hungarian_indexes(matrix):
+    row_indices, col_indices = linear_sum_assignment(-1 * matrix)
+    return row_indices
+
 def accuracy(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
-    return accuracy_score(true_subset.idxmax(), pred_subset.idxmax())
+    return accuracy_score(get_hungarian_indexes(true_subset), get_hungarian_indexes(pred_subset))
 
 def precision(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
-    return precision_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
+    return precision_score(get_hungarian_indexes(true_subset), get_hungarian_indexes(pred_subset), average='weighted')
 
 def recall(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
-    return recall_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
+    return recall_score(get_hungarian_indexes(true_subset), get_hungarian_indexes(pred_subset), average='weighted')
 
 def f1(true_mappings, pred_mappings):
     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)
-    return f1_score(true_subset.idxmax(), pred_subset.idxmax(), average='weighted')
+    return f1_score(get_hungarian_indexes(true_subset), get_hungarian_indexes(pred_subset), average='weighted')
 
 def print_all_scores(true_mappings, pred_mappings):
     print("Mean difference: ", mean_difference(true_mappings, pred_mappings))
