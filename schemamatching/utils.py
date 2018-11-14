@@ -6,6 +6,9 @@ def read_file(file_path):
     with open(file_path) as file:
         return file.read()
 
+def read_data_file(data_filename):
+        return read_file(os.path.join('data', data_filename))
+        
 def get_test_data(name):
     dir_name = 'data'
 

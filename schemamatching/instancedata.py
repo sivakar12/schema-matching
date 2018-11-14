@@ -76,7 +76,7 @@ class SchemaMatcher:
 
         sf = SimilarityFlooding(self.xml1, self.xml2)
         sf.set_initial_scores(self.word_embedding_results)
-        sf.set_initial_scores(self.results)
+        sf.set_initial_scores(self.classifier_results)
 
         sf.flood_until_threshold()
         self.results_after_similarity_flooding = sf.get_results()
@@ -96,6 +96,12 @@ class SchemaMatcher:
         plt.ylabel('mean difference')
         return results
 
+    def do_ensembling(self, threshold=0.6):
+        same_scores = self.get_same_xml_accuracies()
+        if sum(same_scores) / len(same_scores) < threshold:
+            return self.get_word2vec_results()
+        else:
+            return self.do_similarity_flooding()
     #
     # def get_all_scores(self):
     #     if self.classifier_results is None:
