@@ -4,6 +4,8 @@ from sklearn.metrics import accuracy_score, f1_score,\
     precision_score, recall_score
 from scipy.optimize import linear_sum_assignment
 
+from .structure_helpers import get_only_children_tags
+
 def make_true_mappings_dataframe(pairs_file_text):
     pairs = [line.strip().split(':') for line in pairs_file_text.split('\n') if line != '']
     rows = [r[0] for r in pairs]
@@ -25,18 +27,23 @@ def get_intersection(true_mappings, pred_mappings):
     return true_mappings.loc[rows, columns], pred_mappings.loc[rows, columns]
 
 def apply_hungarian(matrix):
-    row_indices, col_indices = linear_sum_assignment(-1 * matrix)
-    new_matrix = pd.DataFrame(np.zeros_like(matrix.values), 
-                            index=matrix.index, columns=matrix.columns)
+    rows = matrix.index
+    columns = matrix.columns
+    rows = get_only_children_tags(rows)
+    columns = get_only_children_tags(columns)
+    new_matrix = matrix.loc[rows, columns]
+    row_indices, col_indices = linear_sum_assignment(-1 * new_matrix)
+    result_matrix = pd.DataFrame(np.zeros_like(new_matrix),
+            index=new_matrix.index, columns=new_matrix.columns)
     for row, col in zip(row_indices, col_indices):
-        new_matrix.iloc[row, col] = 1
-    return new_matrix
+        result_matrix.iloc[row, col] = 1
+    return result_matrix
 
 
 def mean_difference(true_mappings, pred_mappings):
     true, pred = get_intersection(true_mappings, pred_mappings)
     diff = true.values - pred.values
-    return -np.sum(np.abs(diff)) /( diff.shape[0] * diff.shape[1])
+    return -np.sum(np.abs(diff)) / (diff.shape[0] * diff.shape[1])
 
 # def log_loss(true_mappings, pred_mappings):
 #     true_subset, pred_subset = get_intersection(true_mappings, pred_mappings)

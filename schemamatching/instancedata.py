@@ -20,7 +20,7 @@ from sklearn.model_selection import cross_val_score
 from .pipeline_components import DFFeatureUnion, DummyTransformer, ColumnExtractor
 from .graph import SimilarityFlooding
 from .metrics import *
-
+from .structure_helpers import get_parent_tags
 
 class SchemaMatcher:
     def __init__(self, xml1, xml2, true_pairs, classifier=LogisticRegression(), \
@@ -280,13 +280,6 @@ def compare_xmls(xml1, xml2, model=None,
         for p in predictions:
             outputs.loc[tag, p] += 1.0 / total
     return outputs
-
-
-def get_parent_tags(tag):
-    if tag.count('/') < 1:
-        return []
-    parent = re.match(r'(.*)/.*', tag)[1]
-    return [tag] + get_parent_tags(parent)
 
 
 def compare_tag_names(xml1, xml2, include_parents=False):
