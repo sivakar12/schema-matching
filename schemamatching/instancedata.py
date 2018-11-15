@@ -132,7 +132,7 @@ class SchemaMatcher:
     #     }
 
     def get_same_xml_accuracies(self):
-
+        self.classifier_results = None
         def _evaluate_results(pred_matrix):
             true_matrix = np.identity(pred_matrix.shape[0])
             true_matrix = pd.DataFrame(true_matrix, index=pred_matrix.index, columns=pred_matrix.columns)
@@ -140,6 +140,7 @@ class SchemaMatcher:
 
         result_1 = self.get_classifier_results(self.xml1, self.xml1)
         result_2 = self.get_classifier_results(self.xml2, self.xml2)
+        self.classifier_results = None
         return list(map(_evaluate_results, [result_1, result_2]))
 
 
